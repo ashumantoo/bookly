@@ -1,0 +1,46 @@
+# install
+  => pip install alembic
+
+# initialize the repo for migration
+  => alembic init -t async <migration_folder_name>
+     > -t async => using alembic async template for db migration
+     > <migration_folder_name> => this can be any name of your choice, generally people keep it as alembic/migrations
+
+
+# We need to modify two files to db migration work correctly after init.
+  => alembic.ini
+    > Need to modify here for our database connection setup
+    > Clear <sqlalchemy.url> from ini file
+    > Set that value programatically from .env.py file inside the alembic/migrations folder
+
+  => alembic env.py
+    > Need to modify for metadata and async setup
+    > database.url will be set here programatically
+      config.set_main_option("sqlalchemy.url", Config.database.url) #here Config.database.url is your Config class
+    > Set target_medadata  
+
+      - for sqlmodel
+        target_medadata = SQLModel.metadata
+
+      - for sqlalchemy  
+        target_medadata = Base.metadata <= Base is your base sqlalchemy.orm Declearative base
+
+# If you are using sqlmodel then in script.py.mako, import SQLModel     
+
+
+# To generate the migration file, It will only create the file, it will not apply the migration. 
+# Always better to check what is inside this file. What are the changes that are going to happen in the database
+  => alembic revision --autogenerate -m "initial schema"
+    > --autogenerate : to generate the migration file
+    > -m             : migration message 
+
+  ==> generated migration file have two useful function
+    > upgrade() : this tells us that what has been updated from the prev version
+
+    > downgrade() : this tells us that what was the prev state, This is useful to revert back the migration
+
+# To apply the migration
+  => alembic upgrade head
+    > head : meanin of head is, we want to apply all the migration up to the lastest version
+
+
