@@ -8,14 +8,23 @@ from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.books.schemas import Book, BookUpdateModel
-from src.auth.dependencies import AccessTokenBearer
+from src.auth.dependencies import AccessTokenBearer, RoleChecker
 
 book_router = APIRouter()
 book_service = BookService()
 access_token_bearer = AccessTokenBearer()
 
+# Other way or providing dependancy aprt from passing dependancy in the function argument,
+# we can also add it inside the route handler
+role_checker = Depends(RoleChecker(["admin", "user"]))
 
-@book_router.get("/", status_code=status.HTTP_200_OK, response_model=List[Book])
+
+@book_router.get(
+    "/",
+    status_code=status.HTTP_200_OK,
+    response_model=List[Book],
+    dependencies=[role_checker],
+)
 async def get_books(
     session: AsyncSession = Depends(get_session),
     user_details: dict = Depends(access_token_bearer),
@@ -24,7 +33,12 @@ async def get_books(
     return books
 
 
-@book_router.post("/", status_code=status.HTTP_201_CREATED, response_model=Book)
+@book_router.post(
+    "/",
+    status_code=status.HTTP_201_CREATED,
+    response_model=Book,
+    dependencies=[role_checker],
+)
 async def create_book(
     book_data: Book,
     session: AsyncSession = Depends(get_session),
@@ -34,7 +48,12 @@ async def create_book(
     return new_book
 
 
-@book_router.get("/{book_uid}", status_code=status.HTTP_200_OK, response_model=Book)
+@book_router.get(
+    "/{book_uid}",
+    status_code=status.HTTP_200_OK,
+    response_model=Book,
+    dependencies=[role_checker],
+)
 async def get_book(
     book_uid: str,
     session: AsyncSession = Depends(get_session),
@@ -47,7 +66,12 @@ async def get_book(
         return None
 
 
-@book_router.patch("/{book_uid}", status_code=status.HTTP_200_OK, response_model=Book)
+@book_router.patch(
+    "/{book_uid}",
+    status_code=status.HTTP_200_OK,
+    response_model=Book,
+    dependencies=[role_checker],
+)
 async def update_book(
     book_uid: str,
     book_data: BookUpdateModel,
@@ -66,7 +90,11 @@ async def update_book(
         )
 
 
-@book_router.delete("/{book_uid}", status_code=status.HTTP_204_NO_CONTENT)
+@book_router.delete(
+    "/{book_uid}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[role_checker],
+)
 async def delete_book(
     book_uid: str,
     session: AsyncSession = Depends(get_session),

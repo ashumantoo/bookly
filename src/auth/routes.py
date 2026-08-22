@@ -1,15 +1,21 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.auth.dependencies import AccessTokenBearer, RefreshTokenBearer
+from src.auth.dependencies import (
+    AccessTokenBearer,
+    RefreshTokenBearer,
+    get_current_user,
+    RoleChecker,
+)
 from src.auth.schemas import CreateUserModel, UserLoginModel, UserModel
 from src.auth.service import UserService
 from src.db.main import get_session
 
 auth_routes = APIRouter()
 user_service = UserService()
+role_checker = RoleChecker(["admin", "user"])
 
 
 @auth_routes.post("/signup", response_model=UserModel)
@@ -24,6 +30,15 @@ async def login(
     user_data: UserLoginModel, session: AsyncSession = Depends(get_session)
 ):
     return await user_service.user_login(user_data, session)
+
+
+# here user is not a function argument that we need to pass when we call it. instead this user data
+# we are receing it from get_current_user function throught the dependancy
+@auth_routes.get("/me", response_model=UserModel)
+async def get_current_user(
+    user: dict = Depends(get_current_user), _: bool = Depends(role_checker)
+):
+    return user
 
 
 @auth_routes.post("/refresh_token")

@@ -37,6 +37,7 @@ class UserService:
             user_data_dict = user_data.model_dump()
             new_user = User(**user_data_dict)  # unpacking user_data dict
             new_user.password = get_password_hash(user_data_dict["password"])
+            new_user.role = "user"
             session.add(new_user)
             await session.commit()
             return new_user
@@ -57,11 +58,19 @@ class UserService:
 
             if password_valid:
                 access_token = generate_token(
-                    user_data={"email": email, "user_uid": str(user.uid)},
+                    user_data={
+                        "email": email,
+                        "user_uid": str(user.uid),
+                        "role": user.role,
+                    },
                 )
 
                 refresh_token = generate_token(
-                    user_data={"email": email, "user_uid": str(user.uid)},
+                    user_data={
+                        "email": email,
+                        "user_uid": str(user.uid),
+                        "role": user.role,
+                    },
                     refresh=True,
                     expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
                 )
@@ -95,6 +104,7 @@ class UserService:
     Revoke the access token on logout so that it can not be used again.
     Blocking the use of the token and revoke it with a TTL 1hr with redis
     """
+
     async def revoke_access_token(self, token_details):
         jti = token_details["jti"]
         user = token_details["user"]

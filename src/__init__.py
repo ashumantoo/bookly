@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from src.books.routes import book_router
 from src.auth.routes import auth_routes
+from src.db.redis import redis_client
 from contextlib import asynccontextmanager
 
 from src.db.main import init_db
@@ -13,6 +14,7 @@ async def life_span(app: FastAPI):
     print("Server is starting....")
     await init_db()
     yield
+    await redis_client.close()
     print("Server has been stopped.")
 
 
@@ -22,7 +24,7 @@ app = FastAPI(
     version=version,
     title="Bookly",
     description="A REST api for book review web application",
-    lifespan=life_span,
+    # lifespan=life_span, #this was getting used when alembic was not implemented, now alembic will handle the database related operations like table creation etc
 )
 
 
