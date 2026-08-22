@@ -3,7 +3,7 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.auth.schemas import CreateUserModel, UserModel
+from src.auth.schemas import CreateUserModel, UserLoginModel, UserModel
 from src.auth.service import UserService
 from src.db.main import get_session
 
@@ -25,6 +25,13 @@ async def create_user(
             status_code=status.HTTP_409_CONFLICT,
             detail="User with email already exits.",
         )
+
+
+@auth_routes.post("/login", response_model=UserModel)
+async def login(
+    user_data: UserLoginModel, session: AsyncSession = Depends(get_session)
+):
+    return await user_service.user_login(user_data, session)
 
 
 @auth_routes.get("/users", response_model=List[UserModel])

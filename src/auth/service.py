@@ -1,9 +1,14 @@
+from datetime import timedelta
+
+from fastapi import HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlmodel import desc, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.auth.models import User
-from src.auth.schemas import CreateUserModel
-from src.auth.utils import get_password_hash
+from src.auth.schemas import CreateUserModel, UserLoginModel
+from src.auth.utils import get_password_hash, verify_password, generate_token
+from src.constants import REFRESH_TOKEN_EXPIRY
 
 
 class UserService:
@@ -31,3 +36,36 @@ class UserService:
         session.add(new_user)
         await session.commit()
         return new_user
+
+    async def user_login(self, user_data: UserLoginModel, session: AsyncSession):
+        email = user_data.email
+        password = user_data.password
+
+        user = await self.get_user_with_email(email, session)
+
+        if user is not None:
+            password_valid = verify_password(password, user.password)
+
+            if password_valid:
+                access_token = generate_token(
+                    user_data={"email": email, "user_uid": str(user.uid)},
+                )
+
+                refresh_token = generate_token(
+                    user_data={"email": email, "user_uid": str(user.uid)},
+                    refresh=True,
+                    expiry=timedelta(days=REFRESH_TOKEN_EXPIRY),
+                )
+                return JSONResponse(
+                    content={
+                        "message": "Login Success",
+                        "access_token": access_token,
+                        "refresh_token": refresh_token,
+                        "user": {"email": email, "uid": str(user.uid)},
+                    }
+                )
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="email or password is invalid",
+            )
