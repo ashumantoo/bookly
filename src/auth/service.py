@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 
 from fastapi import HTTPException, status
 from fastapi.responses import JSONResponse
@@ -30,12 +30,20 @@ class UserService:
         return users.all()
 
     async def create_user(self, user_data: CreateUserModel, session: AsyncSession):
-        user_data_dict = user_data.model_dump()
-        new_user = User(**user_data_dict)  # unpacking user_data dict
-        new_user.password = get_password_hash(user_data_dict["password"])
-        session.add(new_user)
-        await session.commit()
-        return new_user
+        user = await self.is_user_exits(user_data.email, session)
+
+        if not user:
+            user_data_dict = user_data.model_dump()
+            new_user = User(**user_data_dict)  # unpacking user_data dict
+            new_user.password = get_password_hash(user_data_dict["password"])
+            session.add(new_user)
+            await session.commit()
+            return new_user
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="User with email already exits.",
+            )
 
     async def user_login(self, user_data: UserLoginModel, session: AsyncSession):
         email = user_data.email
@@ -68,4 +76,16 @@ class UserService:
             raise HTTPException(
                 status_code=status.HTTP_401_UNAUTHORIZED,
                 detail="email or password is invalid",
+            )
+
+    async def get_new_access_token(self, token_details):
+        expiry_timestamp = token_details["exp"]
+        if datetime.fromtimestamp(expiry_timestamp) > datetime.now():
+            new_access_token = generate_token(user_data=token_details["user"])
+            return JSONResponse(content={"access_token": new_access_token})
+
+        else:
+            HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired token",
             )
