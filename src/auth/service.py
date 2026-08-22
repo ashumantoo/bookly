@@ -9,6 +9,7 @@ from src.auth.models import User
 from src.auth.schemas import CreateUserModel, UserLoginModel
 from src.auth.utils import get_password_hash, verify_password, generate_token
 from src.constants import REFRESH_TOKEN_EXPIRY
+from src.db.redis import add_jti_to_blocklist
 
 
 class UserService:
@@ -89,3 +90,17 @@ class UserService:
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="Invalid or expired token",
             )
+
+    """
+    Revoke the access token on logout so that it can not be used again.
+    Blocking the use of the token and revoke it with a TTL 1hr with redis
+    """
+    async def revoke_access_token(self, token_details):
+        jti = token_details["jti"]
+        user = token_details["user"]
+        await add_jti_to_blocklist(user["email"], jti)
+
+        return JSONResponse(
+            content={"message": "Logged out successfully"},
+            status_code=status.HTTP_200_OK,
+        )
