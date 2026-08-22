@@ -35,13 +35,12 @@ def generate_token(user_data: dict, expiry: timedelta = None, refresh: bool = Fa
     return token
 
 
-def decode_token(token: str) -> bool:
+def decode_token(token: str) -> dict:
     try:
         token_data = jwt.decode(
-            jwt=token,
-            key=Config.JWT_SECRET,
-            algorithm=Config.JWT_ALGORITHM,
+            jwt=token, key=Config.JWT_SECRET, algorithms=[Config.JWT_ALGORITHM]
         )
+        return token_data
     except jwt.PyJWTError as e:
         logging.exception(e)
         return None
