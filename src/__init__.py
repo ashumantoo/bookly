@@ -4,6 +4,7 @@ from src.auth.routes import auth_routes
 from src.errors.auth_errors import register_auth_errors
 from src.errors.base_error import register_global_errors
 from src.errors.books_errors import register_books_errors
+from src.middleware import register_middleware
 from src.reviews.routes import review_routes
 from src.db.redis import redis_client
 from contextlib import asynccontextmanager
@@ -31,9 +32,13 @@ app = FastAPI(
     # lifespan=life_span, #this was getting used when alembic was not implemented, now alembic will handle the database related operations like table creation etc
 )
 
+# Register errors
 register_auth_errors(app)
 register_books_errors(app)
 register_global_errors(app)
+
+# Register middleware
+register_middleware(app)
 
 app.include_router(auth_routes, prefix=f"/api/{version}/auth", tags=["Auth"])
 app.include_router(book_router, prefix=f"/api/{version}/books", tags=["Books"])
