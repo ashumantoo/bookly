@@ -9,8 +9,8 @@ from alembic import context
 
 from sqlmodel import SQLModel
 
-from src.auth.models import User
-from src.books.models import Book
+from src.db.models import User
+from src.db.models import Book
 from src.db.main import Config
 
 # this is the Alembic Config object, which provides

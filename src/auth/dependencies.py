@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, Request, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.auth.models import User
+from src.db.models import User
 from src.db.redis import token_in_blocklist
 from .utils import decode_token
 from src.db.main import get_session

@@ -5,7 +5,7 @@ from fastapi.responses import JSONResponse
 from sqlmodel import desc, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.auth.models import User
+from src.db.models import User
 from src.auth.schemas import CreateUserModel, UserLoginModel
 from src.auth.utils import get_password_hash, verify_password, generate_token
 from src.constants import REFRESH_TOKEN_EXPIRY

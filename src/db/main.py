@@ -9,7 +9,7 @@ engine = AsyncEngine(create_engine(url=Config.DATABASE_URL, echo=True))
 
 async def init_db():
     async with engine.begin() as db_connection:
-        from src.books.models import Book
+        from src.db.models import Book
 
         # Create all the database tables
         await db_connection.run_sync(SQLModel.metadata.create_all)
