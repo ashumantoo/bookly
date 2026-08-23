@@ -1,8 +1,11 @@
 from datetime import datetime
+from typing import List
 import uuid
 
-from sqlmodel import Column, Field, SQLModel
+from sqlmodel import Column, Field, Relationship, SQLModel
 import sqlalchemy.dialects.postgresql as pg
+
+from src.books import models
 
 
 class User(SQLModel, table=True):
@@ -31,6 +34,11 @@ class User(SQLModel, table=True):
         sa_column=Column(
             pg.TIMESTAMP(timezone=True), nullable=False, default=datetime.now
         )
+    )
+    # populate books using back_populate relationship provided by sqlmodel
+    # selectin : with the help of this sqlmodel loads all the books by using primary key at once.
+    books: List["models.Book"] = Relationship(
+        back_populates="user", sa_relationship_kwargs={"lazy": "selectin"}
     )
 
     def __repr__(self):

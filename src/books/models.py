@@ -1,10 +1,12 @@
 from datetime import date, datetime
 from typing import List, Optional
 
-from sqlmodel import Field, SQLModel, Column
+from sqlmodel import Field, Relationship, SQLModel, Column
 import sqlalchemy.dialects.postgresql as pg
 import sqlalchemy as sa
 import uuid
+
+from src.auth import models
 
 
 # with sa_column, we are telling python to treat this column as sqlalchemy column instead of sqlModel column
@@ -38,6 +40,9 @@ class Book(SQLModel, table=True):
             pg.TIMESTAMP(timezone=True), nullable=False, default=datetime.now
         )
     )
+    # populate user using back_populate relationship provideby by sqlmodel
+    # value to back_populates is not the table name but the property/field on the User sqlmodel Model
+    user: Optional["models.User"] = Relationship(back_populates="books")
 
     # string representaton of the book model
     def __repr__(self):
