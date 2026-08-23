@@ -26,6 +26,8 @@ class Book(SQLModel, table=True):
     edition: str
     price: float
     image_url: Optional[str] = Field(default=None)
+    # Creating Relation between user and books
+    user_uid: Optional[uuid.UUID] = Field(default=None, foreign_key="users.uid")
     created_at: datetime = Field(
         sa_column=Column(
             pg.TIMESTAMP(timezone=True), nullable=False, default=datetime.now
