@@ -17,6 +17,8 @@ class CreateUserModel(BaseModel):
 
 
 from src.books.schemas import Book
+
+
 class UserModel(BaseModel):
     uid: uuid.UUID
     username: str
@@ -27,6 +29,9 @@ class UserModel(BaseModel):
     password: str = Field(exclude=True)
     created_at: datetime
     updated_at: datetime
+
+
+class UserBooksModel(UserModel):
     books: List[Book]
 
 

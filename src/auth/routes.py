@@ -9,7 +9,7 @@ from src.auth.dependencies import (
     get_current_user,
     RoleChecker,
 )
-from src.auth.schemas import CreateUserModel, UserLoginModel, UserModel
+from src.auth.schemas import CreateUserModel, UserLoginModel, UserModel, UserBooksModel
 from src.auth.service import UserService
 from src.db.main import get_session
 
@@ -34,7 +34,7 @@ async def login(
 
 # here user is not a function argument that we need to pass when we call it. instead this user data
 # we are receing it from get_current_user function throught the dependancy
-@auth_routes.get("/me", response_model=UserModel)
+@auth_routes.get("/me", response_model=UserBooksModel)
 async def get_current_user(
     user: dict = Depends(get_current_user), _: bool = Depends(role_checker)
 ):
