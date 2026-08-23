@@ -10,6 +10,7 @@ from src.auth.schemas import CreateUserModel, UserLoginModel
 from src.auth.utils import get_password_hash, verify_password, generate_token
 from src.constants import REFRESH_TOKEN_EXPIRY
 from src.db.redis import add_jti_to_blocklist
+from src.errors.auth_errors import InvalidCredentials, InvalidToken, UserAlreadyExists
 
 
 class UserService:
@@ -42,10 +43,7 @@ class UserService:
             await session.commit()
             return new_user
         else:
-            raise HTTPException(
-                status_code=status.HTTP_409_CONFLICT,
-                detail="User with email already exits.",
-            )
+            raise UserAlreadyExists()
 
     async def user_login(self, user_data: UserLoginModel, session: AsyncSession):
         email = user_data.email
@@ -82,11 +80,10 @@ class UserService:
                         "user": {"email": email, "uid": str(user.uid)},
                     }
                 )
+            else:
+                raise InvalidCredentials()    
         else:
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="email or password is invalid",
-            )
+            raise InvalidCredentials()
 
     async def get_new_access_token(self, token_details):
         expiry_timestamp = token_details["exp"]
@@ -95,10 +92,7 @@ class UserService:
             return JSONResponse(content={"access_token": new_access_token})
 
         else:
-            HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Invalid or expired token",
-            )
+            raise InvalidToken()
 
     """
     Revoke the access token on logout so that it can not be used again.

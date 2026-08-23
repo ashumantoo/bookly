@@ -1,10 +1,12 @@
 from datetime import datetime
+from signal import raise_signal
 
 from sqlmodel import desc, select
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.db.models import Book
 from src.books.schemas import BookCreateModel, BookUpdateModel
+from src.errors.books_errors import BookNotFound
 
 
 class BookService:
@@ -26,7 +28,10 @@ class BookService:
         statement = select(Book).where(Book.uid == book_uid)
         result = await session.exec(statement)
         book = result.first()
-        return book if book is not None else None
+        if book:
+            return book
+        else:
+            raise BookNotFound()
 
     async def create_book(
         self, book_data: BookCreateModel, user_uid: str, session: AsyncSession
