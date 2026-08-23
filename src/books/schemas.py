@@ -1,9 +1,11 @@
 from __future__ import annotations  # 1. Postpones annotation evaluation
 from datetime import date, datetime
 import uuid
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, List
 
 from pydantic import BaseModel
+
+from src.reviews.schemas import ReviewModel
 
 if TYPE_CHECKING:
     from src.auth.schemas import UserModel
@@ -57,13 +59,14 @@ class Book(BaseModel):
     language: str
     edition: str
     price: float
-    image_url: str
+    image_url: str | None
     created_at: datetime
     updated_at: datetime
 
 
-class BookWithUser(Book):
+class BookDetailsModel(Book):
     user: UserModel | None = None
+    reviews: List[ReviewModel]
 
 
 class BookCreateModel(BaseModel):
@@ -77,7 +80,7 @@ class BookCreateModel(BaseModel):
     language: str
     edition: str
     price: float
-    image_url: str
+    image_url: str = ""
 
 
 class BookUpdateModel(BaseModel):
@@ -95,4 +98,4 @@ class BookUpdateModel(BaseModel):
 
 from src.auth.schemas import UserModel
 
-BookWithUser.model_rebuild()
+BookDetailsModel.model_rebuild()

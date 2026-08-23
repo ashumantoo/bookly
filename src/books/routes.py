@@ -5,7 +5,7 @@ from src.books.service import BookService
 from src.db.main import get_session
 from sqlmodel.ext.asyncio.session import AsyncSession
 
-from src.books.schemas import Book, BookUpdateModel, BookWithUser
+from src.books.schemas import Book, BookCreateModel, BookUpdateModel, BookDetailsModel
 from src.auth.dependencies import AccessTokenBearer, RoleChecker
 
 book_router = APIRouter()
@@ -20,7 +20,7 @@ role_checker = Depends(RoleChecker(["admin", "user"]))
 @book_router.get(
     "/",
     status_code=status.HTTP_200_OK,
-    response_model=List[BookWithUser],
+    response_model=List[Book],
     dependencies=[role_checker],
 )
 async def get_books(
@@ -51,7 +51,7 @@ async def get_user_book_submissions(
     dependencies=[role_checker],
 )
 async def create_book(
-    book_data: Book,
+    book_data: BookCreateModel,
     session: AsyncSession = Depends(get_session),
     token_details: dict = Depends(access_token_bearer),
 ) -> dict:
@@ -63,7 +63,7 @@ async def create_book(
 @book_router.get(
     "/{book_uid}",
     status_code=status.HTTP_200_OK,
-    response_model=Book,
+    response_model=BookDetailsModel,
     dependencies=[role_checker],
 )
 async def get_book(
