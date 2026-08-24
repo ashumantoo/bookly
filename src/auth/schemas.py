@@ -1,4 +1,5 @@
 from datetime import datetime
+import email
 from typing import List
 import uuid
 
@@ -40,3 +41,7 @@ class UserBooksModel(UserModel):
 class UserLoginModel(BaseModel):
     email: str
     password: str
+
+
+class EmailModel(BaseModel):
+    email_addresses: List[str]

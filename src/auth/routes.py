@@ -9,7 +9,13 @@ from src.auth.dependencies import (
     get_current_user,
     RoleChecker,
 )
-from src.auth.schemas import CreateUserModel, UserLoginModel, UserModel, UserBooksModel
+from src.auth.schemas import (
+    CreateUserModel,
+    EmailModel,
+    UserLoginModel,
+    UserModel,
+    UserBooksModel,
+)
 from src.auth.service import UserService
 from src.db.main import get_session
 
@@ -18,7 +24,7 @@ user_service = UserService()
 role_checker = RoleChecker(["admin", "user"])
 
 
-@auth_routes.post("/signup", response_model=UserModel)
+@auth_routes.post("/signup")
 async def create_user(
     user_data: CreateUserModel, session: AsyncSession = Depends(get_session)
 ):
@@ -54,3 +60,13 @@ async def get_users(session: AsyncSession = Depends(get_session)):
 @auth_routes.post("/logout", response_model=UserModel)
 async def logout(token_details: dict = Depends(AccessTokenBearer())):
     return await user_service.revoke_access_token(token_details)
+
+
+@auth_routes.post("/send_mail")
+async def send_mail(emails: EmailModel):
+    return await user_service.send_email(emails=emails.email_addresses)
+
+
+@auth_routes.get("/verify/{token}")
+async def verify_email(token: str, session: AsyncSession = Depends(get_session)):
+    return await user_service.verify_email(email_token=token, session=session)

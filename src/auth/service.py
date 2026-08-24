@@ -10,7 +10,15 @@ from src.auth.schemas import CreateUserModel, UserLoginModel
 from src.auth.utils import get_password_hash, verify_password, generate_token
 from src.constants import REFRESH_TOKEN_EXPIRY
 from src.db.redis import add_jti_to_blocklist
-from src.errors.auth_errors import InvalidCredentials, InvalidToken, UserAlreadyExists
+from src.errors.auth_errors import (
+    InvalidCredentials,
+    InvalidToken,
+    UserAlreadyExists,
+    UserNotFound,
+)
+from src.mail import create_message, mail
+from src.config import Config
+from src.auth.utils import create_url_safe_token, decode_url_safe_token
 
 
 class UserService:
@@ -41,7 +49,29 @@ class UserService:
             new_user.role = "user"
             session.add(new_user)
             await session.commit()
-            return new_user
+
+            # send email varification email
+            email_token = create_url_safe_token({"email": user_data.email})
+
+            link = f"http://{Config.DOMAIN_NAME}/api/v1/auth/verify/{email_token}"
+
+            html_message = f"""
+            <h1>Verify your email</h1>
+            <p>Please click this <a href="{link}">link</a> to verify your email</p>
+            """
+
+            message = create_message(
+                recipients=[user_data.email],
+                subject="Verify your email",
+                body=html_message,
+            )
+
+            await mail.send_message(message)
+
+            return {
+                "message": "User account created! check email to verify your account",
+                "user": new_user,
+            }
         else:
             raise UserAlreadyExists()
 
@@ -81,7 +111,7 @@ class UserService:
                     }
                 )
             else:
-                raise InvalidCredentials()    
+                raise InvalidCredentials()
         else:
             raise InvalidCredentials()
 
@@ -108,3 +138,44 @@ class UserService:
             content={"message": "Logged out successfully"},
             status_code=status.HTTP_200_OK,
         )
+
+    async def send_email(self, emails: list[str]):
+        html = "<h3>Welcom to Bookly app<h3>"
+
+        message = create_message(recipients=emails, subject="Welcome", body=html)
+
+        await mail.send_message(message)
+
+        return {"message": "Email send successfully."}
+
+    async def verify_email(self, email_token: str, session: AsyncSession):
+        token_data = decode_url_safe_token(token=email_token)
+        user_email = token_data.get("email")
+
+        if user_email:
+            user = await self.get_user_with_email(email=user_email, session=session)
+
+            if not user:
+                raise UserNotFound()
+
+            await self.update_user(user, {"is_verified": True}, session)
+
+            return JSONResponse(
+                content={"message": "Account verified successfully"},
+                status_code=status.HTTP_200_OK,
+            )
+
+        return JSONResponse(
+            content={"message": "Error occured during verification."},
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
+
+    async def update_user(
+        self, user: User, updated_user_data: dict, session: AsyncSession
+    ):
+        for k, v in updated_user_data.items():
+            setattr(user, k, v)
+
+        await session.commit()
+
+        return user
