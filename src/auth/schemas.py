@@ -1,6 +1,6 @@
 from datetime import datetime
-import email
 from typing import List
+from unittest.mock import Base
 import uuid
 
 from pydantic import BaseModel
@@ -45,3 +45,12 @@ class UserLoginModel(BaseModel):
 
 class EmailModel(BaseModel):
     email_addresses: List[str]
+
+
+class PasswordResetRequestModel(BaseModel):
+    email: str
+
+
+class PasswordResetConfirmModel(BaseModel):
+    new_password: str
+    confirm_new_password: str

@@ -5,6 +5,12 @@ from fastapi.middleware.trustedhost import TrustedHostMiddleware
 import time
 import logging
 
+"""
+ Authentication and Authorization can also be handled through middleware but In this app these both things has been handled through
+ dependancy injection
+"""
+
+
 # Disabled default logging of fastApi
 logger = logging.getLogger("uvicorn.access")
 logger.disabled = True

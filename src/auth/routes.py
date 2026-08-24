@@ -12,6 +12,8 @@ from src.auth.dependencies import (
 from src.auth.schemas import (
     CreateUserModel,
     EmailModel,
+    PasswordResetConfirmModel,
+    PasswordResetRequestModel,
     UserLoginModel,
     UserModel,
     UserBooksModel,
@@ -70,3 +72,20 @@ async def send_mail(emails: EmailModel):
 @auth_routes.get("/verify/{token}")
 async def verify_email(token: str, session: AsyncSession = Depends(get_session)):
     return await user_service.verify_email(email_token=token, session=session)
+
+
+@auth_routes.post("/password-reset-request")
+async def password_reset_request(
+    password_reset_data: PasswordResetRequestModel,
+    session: AsyncSession = Depends(get_session),
+):
+    return await user_service.password_reset_request(password_reset_data, session)
+
+
+@auth_routes.post("/password-reset-confirm/{token}")
+async def password_reset_request(
+    token: str,
+    passwords: PasswordResetConfirmModel,
+    session: AsyncSession = Depends(get_session),
+):
+    return await user_service.reset_account_password(token, passwords, session)
