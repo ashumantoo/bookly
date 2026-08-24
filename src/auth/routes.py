@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from sqlmodel.ext.asyncio.session import AsyncSession
 
 from src.auth.dependencies import (
@@ -28,9 +28,11 @@ role_checker = RoleChecker(["admin", "user"])
 
 @auth_routes.post("/signup")
 async def create_user(
-    user_data: CreateUserModel, session: AsyncSession = Depends(get_session)
+    user_data: CreateUserModel,
+    bg_tasks: BackgroundTasks,
+    session: AsyncSession = Depends(get_session),
 ):
-    return await user_service.create_user(user_data, session)
+    return await user_service.create_user(user_data, bg_tasks, session)
 
 
 @auth_routes.post("/login", response_model=UserModel)
@@ -77,9 +79,12 @@ async def verify_email(token: str, session: AsyncSession = Depends(get_session))
 @auth_routes.post("/password-reset-request")
 async def password_reset_request(
     password_reset_data: PasswordResetRequestModel,
+    bg_tasks: BackgroundTasks,
     session: AsyncSession = Depends(get_session),
 ):
-    return await user_service.password_reset_request(password_reset_data, session)
+    return await user_service.password_reset_request(
+        password_reset_data, bg_tasks, session
+    )
 
 
 @auth_routes.post("/password-reset-confirm/{token}")

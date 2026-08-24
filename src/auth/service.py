@@ -1,6 +1,6 @@
 from datetime import timedelta, datetime
 
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, BackgroundTasks
 from fastapi.responses import JSONResponse
 from sqlmodel import desc, select
 from sqlmodel.ext.asyncio.session import AsyncSession
@@ -44,7 +44,12 @@ class UserService:
         users = await session.exec(statement)
         return users.all()
 
-    async def create_user(self, user_data: CreateUserModel, session: AsyncSession):
+    async def create_user(
+        self,
+        user_data: CreateUserModel,
+        bg_tasks: BackgroundTasks,
+        session: AsyncSession,
+    ):
         user = await self.is_user_exits(user_data.email, session)
 
         if not user:
@@ -71,7 +76,12 @@ class UserService:
                 body=html_message,
             )
 
-            await mail.send_message(message)
+            # await mail.send_message(message)
+
+            # Pushing send email task in the background using inbuilt fastapi BackgroundTasks to unblock the main processor
+            # since sending email is taking time to execute. add_task function takes two args 1st: is the function, 2nd is
+            # the params required for the function while calling.
+            bg_tasks.add_task(mail.send_message, message)
 
             return {
                 "message": "User account created! check email to verify your account",
@@ -185,7 +195,10 @@ class UserService:
         return user
 
     async def password_reset_request(
-        self, password_reset_data: PasswordResetRequestModel, session: AsyncSession
+        self,
+        password_reset_data: PasswordResetRequestModel,
+        bg_tasks: BackgroundTasks,
+        session: AsyncSession,
     ):
         email = password_reset_data.email
         user = await self.get_user_with_email(email, session)
@@ -207,7 +220,9 @@ class UserService:
             body=html_message,
         )
 
-        await mail.send_message(message)
+        # await mail.send_message(message)
+        # Handling through background task
+        bg_tasks.add_task(mail.send_message, message)
 
         return JSONResponse(
             content={
